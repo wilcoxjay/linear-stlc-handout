@@ -438,8 +438,8 @@ heap using linear types.
   \inferrule*[right=If]
     {\haslintype{\gamma_1}{e_1}{\bool}\and
      \haslintype{\gamma_2}{e_2}{\tau}\and
-     \haslintype{\gamma_3}{e_3}{\tau}\and
-     \gamma = \gamma_1 \uplus \gamma_2 \uplus \gamma_3}
+     \haslintype{\gamma_2}{e_3}{\tau}\and
+     \gamma = \gamma_1 \uplus \gamma_2}
     {\haslintype{\gamma}{\IF{e_1}{e_2}{e_3}}{\tau}}
   \and
   \inferrule*[right=Op]
@@ -451,7 +451,7 @@ heap using linear types.
     {\haslintype{\gamma}{e_1\oplus e_2}{\tau_2}}
   \and
   \inferrule*[right=Alloc]
-    {\forall i,~\haslintype{\gamma_i}{e_i}{\tau} \and
+    {\left(\forall i,~~\haslintype{\gamma_i}{e_i}{\tau}\right) \and
      \gamma = {\scriptstyle\biguplus_i} \gamma_i
     }
     {\haslintype{\gamma}{[e_1,\dots,e_n]}{\tyarray\ \tau}}
