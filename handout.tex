@@ -25,6 +25,7 @@
 \newcommand{\bool}{\ensuremath{\kw{bool}}}
 \newcommand{\tyint}{\ensuremath{\kw{int}}}
 \newcommand{\tyarray}{\ensuremath{\kw{array}}}
+\newcommand{\linto}{\ensuremath{\multimap}}
 
 \newcommand{\true}{\ensuremath{\kw{true}}}
 \newcommand{\false}{\ensuremath{\kw{false}}}
@@ -41,6 +42,7 @@
 \newcommand{\fix}[5]{\fun\ #1\ (#2\Colon#3):#4 = #5}
 
 \newcommand{\hastype}[3]{\ensuremath{#1\mathrel{\,\vdash\,}#2 \COLON #3}}
+\newcommand{\haslintype}[3]{\ensuremath{#1\mathrel{\,\Vdash\,}#2 \COLON #3}}
 
 \newcommand{\step}[2]{\ensuremath{#1~\longrightarrow~#2}}
 
@@ -374,16 +376,102 @@ are never observed, so 0 is read in both cases on the last line), but
 read in both cases on the last line).
 
 So we like the heap semantics because operationally it is more
-efficient, but it makes our programs hard to reason about, because we
-have to consider aliasing of arrays.
+efficient, but adopting it as is would fundamentally change the way
+we reason about programs.
 
-We can get the best of both worlds using linear types.
+We can recover purely functional reasoning even with arrays on the
+heap using linear types.
 
 \section*{Linear STLC with arrays on the heap}
 
-\vspace{1cm}
-\todo{blah blah linear things and stuff}
-\vspace{1cm}
+{
+\noindent
+\hskip 1cm plus 1fill minus 0pt
+\[
+\begin{array}{r@{~}c@{~~}l}
+  \tau \bnfeq
+       %\unit\\
+       %\bnfalt
+       \bool\\
+       \bnfalt \tyint\\
+       \bnfalt \tau\linto\tau\\\\
+\end{array}
+\]
+}
+
+{
+\def\MathparLineskip {\lineskiplimit=1.2em\lineskip=2.5em plus 0.2em}
+
+{
+\setlength{\fboxsep}{5pt}
+\fbox{\haslintype{\gamma}{e}{\tau}}
+}
+\begin{mathpar}
+  \inferrule*[right=Var]
+    { }
+    {\haslintype{x\Colon\tau}{x}{\tau}}
+  \and
+  \inferrule*[right=FunBroken]
+    {\hastype{\gamma,f\Colon\tau_1\to\tau_2,x\Colon\tau_1}{e}{\tau_2}}
+    {\hastype{\gamma}{\fix{f}{x}{\tau_1}{\tau_2}{e}}{\tau_1\linto\tau_2}}
+  \and
+  \inferrule*[right=App]
+    {\haslintype{\gamma_1}{e_1}{\tau_1\to\tau_2} \and
+     \haslintype{\gamma_2}{e_2}{\tau_1} \and
+     \gamma = \gamma_1\uplus  \gamma_2
+     }
+    {\haslintype{\gamma}{e_1\ e_2}{\tau_2}}
+  \\
+  \inferrule*[right=True]
+    { }
+    {\haslintype{\cdot}{\true}{\bool}}
+  \and
+  \inferrule*[right=False]
+    { }
+    {\haslintype{\cdot}{\false}{\bool}}
+  \and
+  \inferrule*[right=Int]
+    { }
+    {\haslintype{\cdot}{n}{\tyint}}
+  \and
+  \inferrule*[right=If]
+    {\haslintype{\gamma_1}{e_1}{\bool}\and
+     \haslintype{\gamma_2}{e_2}{\tau}\and
+     \haslintype{\gamma_3}{e_3}{\tau}\and
+     \gamma = \gamma_1 \uplus \gamma_2 \uplus \gamma_3}
+    {\haslintype{\gamma}{\IF{e_1}{e_2}{e_3}}{\tau}}
+  \and
+  \inferrule*[right=Op]
+    {\oplus\COLON \tau_1^2 \to \tau_2 \and
+     \haslintype{\gamma_1}{e_1}{\tau_1} \and
+     \haslintype{\gamma_2}{e_2}{\tau_1} \and
+     \gamma = \gamma_1 \uplus \gamma_2
+    }
+    {\haslintype{\gamma}{e_1\oplus e_2}{\tau_2}}
+  \and
+  \inferrule*[right=Alloc]
+    {\forall i,~\haslintype{\gamma_i}{e_i}{\tau} \and
+     \gamma = {\scriptstyle\biguplus_i} \gamma_i
+    }
+    {\haslintype{\gamma}{[e_1,\dots,e_n]}{\tyarray\ \tau}}
+  \and
+  \inferrule*[right=Read]
+    {\haslintype{\gamma_1}{e_1}{\tyarray\ \tau} \and
+     \haslintype{\gamma_2}{e_2}{\tyint} \and
+     \gamma = \gamma_1\uplus \gamma_2
+    }
+    {\haslintype{\gamma}{e_1[e_2]}{\tau}}
+  \and
+  \inferrule*[right=Write]
+    {\haslintype{\gamma_1}{e_1}{\tyarray\ \tau} \and
+     \haslintype{\gamma_2}{e_2}{\tyint} \and
+     \haslintype{\gamma_3}{e_3}{\tau} \and
+     \gamma = \gamma_1 \uplus \gamma_2 \uplus \gamma_3
+    }
+    {\haslintype{\gamma}{e_1[e_2] := e_3}{\tyarray\ \tau}}
+
+\end{mathpar}
+}
 
 The bad example program from before is ruled out by the type
 system. \todo{explain why it doesn't typecheck}
