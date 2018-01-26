@@ -8,34 +8,46 @@
 \usepackage{mathpartir}
 \usepackage{array}
 \usepackage{varwidth}
+\usepackage{xcolor}
 
-\title{A Missing 505 Lecture: Linear STLC}
+\title{\vspace{-60pt}A Missing 505 Lecture: Linear STLC}
 \author{Chandrakana Nandi\and James R. Wilcox}
 \date{January 26, 2018}
 
 \newcommand{\bnfeq}{&::=&}
 \newcommand{\bnfalt}{&~\mid&}
 
+\newcommand{\todo}[1]{{\color{red} #1}}
 
-\newcommand{\bool}{\ensuremath{\mathsf{bool}}}
-\newcommand{\true}{\ensuremath{\mathsf{true}}}
-\newcommand{\false}{\ensuremath{\mathsf{false}}}
-\newcommand{\IF}[3]{\ensuremath{\mathsf{if}\ #1\ \mathsf{then}\ #2\ \mathsf{else}\ #3}}
+\newcommand{\kw}[1]{\ensuremath{\mathsf{#1}}}
+
+\newcommand{\unit}{\ensuremath{\kw{unit}}}
+\newcommand{\bool}{\ensuremath{\kw{bool}}}
+\newcommand{\tyint}{\ensuremath{\kw{int}}}
+\newcommand{\tyarray}{\ensuremath{\kw{array}}}
+
+\newcommand{\true}{\ensuremath{\kw{true}}}
+\newcommand{\false}{\ensuremath{\kw{false}}}
+\newcommand{\IF}[3]{\ensuremath{\kw{if}\ #1\ \kw{then}\ #2\ \kw{else}\ #3}}
+\newcommand{\gop}{\ensuremath{\circ}}
+
+\newcommand{\letin}[2]{\kw{let}\ #1 = #2\ \kw{in}}
 
 \newcommand{\Colon}{{\hspace{1pt}:\hspace{1pt}}}
 \newcommand{\COLON}{\mathrel{\,:\,}}
 
 \newcommand{\LAMBDA}[3]{\lambda #1\Colon#2.\; #3}
+\newcommand{\fun}{\ensuremath{\kw{fun}}}
+\newcommand{\fix}[5]{\fun\ #1\ (#2\Colon#3):#4 = #5}
 
 \newcommand{\hastype}[3]{\ensuremath{#1\mathrel{\,\vdash\,}#2 \COLON #3}}
 
 \newcommand{\step}[2]{\ensuremath{#1~\longrightarrow~#2}}
 
-
 \begin{document}
 \maketitle
 
-Recall the call-by-value simply typed $\lambda$-calculus with booleans.
+\section*{But first: Structural CBV STLC + recursion, bools, and ints}
 
 {
 \noindent
@@ -43,8 +55,17 @@ Recall the call-by-value simply typed $\lambda$-calculus with booleans.
 \begin{varwidth}[t]{0.5\textwidth}
 \[
 \begin{array}{r@{~}c@{~~}l}
-  \tau \bnfeq  \bool\\
-       \bnfalt \tau\to\tau\\
+  \tau \bnfeq
+       %\unit\\
+       %\bnfalt
+       \bool\\
+       \bnfalt \tyint\\
+       \bnfalt \tau\to\tau\\\\
+  \oplus\bnfeq
+       +\\
+       \bnfalt -\\
+       \bnfalt =\\
+       \bnfalt\ldots\\
 \end{array}
 \]
 \end{varwidth}
@@ -53,11 +74,16 @@ Recall the call-by-value simply typed $\lambda$-calculus with booleans.
 \[
 \begin{array}{r@{~}c@{~~}l}
   e \bnfeq     x \\
-    \bnfalt    \LAMBDA{x}{\tau}{e}\\
+    %\bnfalt    \LAMBDA{x}{\tau}{e}\\
+    \bnfalt    \fix{f}{x}{\tau_1}{\tau_2}{e}\\
     \bnfalt    e\ e \\
+    %\bnfalt    () \\
     \bnfalt    \true \\
     \bnfalt    \false \\
-    \bnfalt    \IF{e}{e}{e}
+    \bnfalt    \IF{e}{e}{e}\\
+    \bnfalt    n \\
+    \bnfalt    e \oplus e \\
+
 \end{array}
 \]
 \end{varwidth}
@@ -65,16 +91,19 @@ Recall the call-by-value simply typed $\lambda$-calculus with booleans.
 \begin{varwidth}[t]{0.5\textwidth}
 \[
 \begin{array}{r@{~}c@{~~}l}
-  v \bnfeq     \LAMBDA{x}{\tau}{e}\\
+  v \bnfeq     \fix{f}{x}{\tau_1}{\tau_2}{e}\\
+    %\bnfalt    \LAMBDA{x}{\tau}{e}\\
+    %\bnfalt    () \\
     \bnfalt    \true \\
-    \bnfalt    \false
+    \bnfalt    \false\\
+    \bnfalt    n\\
 \end{array}
 \]
 \end{varwidth}
 \hskip 0pt plus 1fill minus 0pt
 }
 
-\vspace{1cm}
+\vspace{5mm}
 
 {
 \def\MathparLineskip {\lineskiplimit=1.2em\lineskip=2.5em plus 0.2em}
@@ -88,14 +117,21 @@ Recall the call-by-value simply typed $\lambda$-calculus with booleans.
     {x\Colon\tau\in\Gamma}
     {\hastype{\Gamma}{x}{\tau}}
   \and
-  \inferrule*[right=Abs]
-    {\hastype{\Gamma,x\Colon\tau_1}{e}{\tau_2}}
-    {\hastype{\Gamma}{\LAMBDA{x}{\tau_1}{e}}{\tau_1\to\tau_2}}
+  % \inferrule*[right=Abs]
+  %   {\hastype{\Gamma,x\Colon\tau_1}{e}{\tau_2}}
+  %   {\hastype{\Gamma}{\LAMBDA{x}{\tau_1}{e}}{\tau_1\to\tau_2}}
+  \inferrule*[right=Fun]
+    {\hastype{\Gamma,f\Colon\tau_1\to\tau_2,x\Colon\tau_1}{e}{\tau_2}}
+    {\hastype{\Gamma}{\fix{f}{x}{\tau_1}{\tau_2}{e}}{\tau_1\to\tau_2}}
   \and
   \inferrule*[right=App]
     {\hastype{\Gamma}{e_1}{\tau_1\to\tau_2} \and
      \hastype{\Gamma}{e_2}{\tau_1}}
     {\hastype{\Gamma}{e_1\ e_2}{\tau_2}}
+  % \and
+  % \inferrule*[right=Unit]
+  %   { }
+  %   {\hastype{\Gamma}{()}{\unit}}
   \and
   \inferrule*[right=True]
     { }
@@ -105,15 +141,24 @@ Recall the call-by-value simply typed $\lambda$-calculus with booleans.
     { }
     {\hastype{\Gamma}{\false}{\bool}}
   \and
+  \inferrule*[right=Int]
+    { }
+    {\hastype{\Gamma}{n}{\tyint}}
+  \and
   \inferrule*[right=If]
     {\hastype{\Gamma}{e_1}{\bool}\and
      \hastype{\Gamma}{e_2}{\tau}\and
      \hastype{\Gamma}{e_3}{\tau}}
     {\hastype{\Gamma}{\IF{e_1}{e_2}{e_3}}{\tau}}
+  \and
+  \inferrule*[right=Op]
+    {\oplus\COLON \tau_1^2 \to \tau_2 \and
+     \hastype{\Gamma}{e_1}{\tau_1} \and
+     \hastype{\Gamma}{e_2}{\tau_1}
+    }
+    {\hastype{\Gamma}{e_1\oplus e_2}{\tau_2}}
 \end{mathpar}
 }
-
-\vspace{1cm}
 
 {
 \def\MathparLineskip {\lineskiplimit=1.2em\lineskip=2.5em plus 0.2em}
@@ -123,9 +168,12 @@ Recall the call-by-value simply typed $\lambda$-calculus with booleans.
 \fbox{\step{e}{e}}
 }
 \begin{mathpar}
+  % \inferrule*[right=Beta]
+  %   { }
+  %   {\step{(\LAMBDA{x}{\tau}{e_1})\ v_2}{e_1[v_2/x]}}
   \inferrule*[right=Beta]
-    { }
-    {\step{(\LAMBDA{x}{\tau}{e_1})\ v_2}{e_1[v_2/x]}}
+    { v_1 ~=~~ \fix{f}{x}{\tau_1}{\tau_2}{e_1}}
+    {\step{v_1\ v_2}{e_1[v_1,v_2/f,x]}}
   \and
   \inferrule*[right=App1]
     {\step{e_1}{e_1'}}
@@ -143,11 +191,188 @@ Recall the call-by-value simply typed $\lambda$-calculus with booleans.
     { }
     {\step{\IF{\false}{e_2}{e_3}}{e_3}}
   \and
-  \inferrule*[right=If1]
+  \inferrule*[right=IfInd]
     {\step{e_1}{e_1'}}
     {\step{\IF{e_1}{e_2}{e_3}}{\IF{e_1'}{e_2}{e_3}}}
+  \and
+  \inferrule*[right=Op1]
+    {\step{e_1}{e_1'}}
+    {\step{e_1\oplus e_2}{e_1'\oplus e_2}}
+  \and
+  \inferrule*[right=Op2]
+    {\step{e_2}{e_2'}}
+    {\step{v_1\oplus e_2}{v_1\oplus e_2'}}
+  \and
+  \inferrule*[right=DoOp]
+    { \llbracket\oplus\rrbracket(v_1,v_2)=v_3}
+    {\step{v_1\oplus v_2}{v_3}}
 \end{mathpar}
 }
 
+\clearpage
+
+\section*{Adding purely functional arrays}
+
+We can then add purely functional arrays, where writing copies the
+whole thing. (This is actually kind of garbage since programs that
+access out of bounds get stuck. So these are unsafe immutable arrays.)
+
+{
+\noindent
+\hskip 1cm plus 1fill minus 0pt
+\begin{varwidth}[t]{0.5\textwidth}
+\[
+\begin{array}{r@{~}c@{~~}l}
+  \tau \bnfeq \ldots\\
+       \bnfalt \tyarray\ \tau\\
+\end{array}
+\]
+\end{varwidth}
+\hskip 0pt plus 1fill minus 0pt
+\begin{varwidth}[t]{0.5\textwidth}
+\[
+\begin{array}{r@{~}c@{~~}l}
+  e \bnfeq     \ldots\\
+    \bnfalt    [e, \ldots, e]\\
+    \bnfalt    e[e]\\
+    \bnfalt    e[e] := e\\
+\end{array}
+\]
+\end{varwidth}
+\hskip -1cm plus 1fill minus 0pt
+\begin{varwidth}[t]{0.5\textwidth}
+\[
+\begin{array}{r@{~}c@{~~}l}
+  v \bnfeq     \ldots\\
+    \bnfalt    [v, \ldots, v]\\
+\end{array}
+\]
+\end{varwidth}
+\hskip 0pt plus 1fill minus 0pt
+}
+
+{
+\def\MathparLineskip {\lineskiplimit=1.2em\lineskip=2.5em plus 0.2em}
+
+{
+\setlength{\fboxsep}{5pt}
+\fbox{\hastype{\Gamma}{e}{\tau}}
+}
+\begin{mathpar}
+  \inferrule*[right=Alloc]
+    {\forall i,~\hastype{\Gamma}{e_i}{\tau}}
+    {\hastype{\Gamma}{[e_1,\dots,e_n]}{\tyarray\ \tau}}
+  \and
+  \inferrule*[right=Read]
+    {\hastype{\Gamma}{e_1}{\tyarray\ \tau} \and
+     \hastype{\Gamma}{e_2}{\tyint}
+    }
+    {\hastype{\Gamma}{e_1[e_2]}{\tau}}
+  \and
+  \inferrule*[right=Write]
+    {\hastype{\Gamma}{e_1}{\tyarray\ \tau} \and
+     \hastype{\Gamma}{e_2}{\tyint} \and
+     \hastype{\Gamma}{e_3}{\tau}
+    }
+    {\hastype{\Gamma}{e_1[e_2] := e_3}{\tyarray\ \tau}}
+\end{mathpar}
+}
+
+{
+\def\MathparLineskip {\lineskiplimit=1.2em\lineskip=2.5em plus 0.2em}
+
+{
+\setlength{\fboxsep}{5pt}
+\fbox{\step{e}{e}}
+}
+\begin{mathpar}
+  \inferrule*[right=AllocInd]
+    {\step{e_i}{e_i'}}
+    {\step{[v_1,\dots,v_{i-1},e_i,\dots,e_n]}{[v_1,\dots,v_{i-1},e_i',\dots,e_n]}}
+  \\
+  \inferrule*[right=Read1]
+    {\step{e_1}{e_1'}}
+    {\step{e_1[e_2]}{e_1'[e_2]}}
+  \and
+  \inferrule*[right=Read2]
+    {\step{e_2}{e_2'}}
+    {\step{v_1[e_2]}{v_1[e_2']}}
+  \and
+  \inferrule*[right=DoRead]
+    { }
+    {\step{[v_1,\dots,v_n][i]}{v_i}}
+  \and
+  \inferrule*[right=Write1]
+    {\step{e_1}{e_1'}}
+    {\step{e_1[e_2] := e_3}{e_1'[e_2] := e_3}}
+  \and
+  \inferrule*[right=Write2]
+    {\step{e_2}{e_2'}}
+    {\step{v_1[e_2] := e_3}{v_1[e_2'] := e_3}}
+  \and
+  \inferrule*[right=Write3]
+    {\step{e_3}{e_3'}}
+    {\step{v_1[v_2] := e_3}{v_1[v_2] := e_3'}}
+  \and
+  \inferrule*[right=DoWrite]
+    { }
+    {\step{[v_1,\dots,v_n][i] := v}{[v_1,\dots,v_{i-1},v,v_{i+1},\dots,v_n]}}
+\end{mathpar}
+}
+
+If we take these operational semantics literally, then we are copying
+arrays by value all over the place.
+
+\clearpage
+
+\section*{Arrays on the heap}
+In hopes of efficiency, we might instead
+try to allocate arrays on a heap and pass references around.
+
+\vspace{1cm}
+\todo{blah blah rules with heaps and stuff}
+
+\todo{don't forget to make $[v, \dots, v]$ not a value any more}
+\vspace{1cm}
+
+But \textbf{this would actually change the meaning of arrays} to no longer be
+purely functional. For example, the program
+\begin{align*}
+  &\letin{a}{[0, 0]}\\
+  &\letin{b}{a[0] := 1}\\
+  &\letin{c}{a[1] := 1}\\
+  &b[1] + c[0]
+\end{align*}
+evaluates to 0 under pure semantics (since the writes to $b$ and $c$
+are never observed, so 0 is read in both cases on the last line), but
+2 under heap semantics (since the writes to $b$ and $c$ alias and 1 is
+read in both cases on the last line).
+
+So we like the heap semantics because operationally it is more
+efficient, but it makes our programs hard to reason about, because we
+have to consider aliasing of arrays.
+
+We can get the best of both worlds using linear types.
+
+\section*{Linear STLC with arrays on the heap}
+
+\vspace{1cm}
+\todo{blah blah linear things and stuff}
+\vspace{1cm}
+
+The bad example program from before is ruled out by the type
+system. \todo{explain why it doesn't typecheck}
+
+In fact, the value semantics and the heap semantics are equivalent for
+well-typed programs. The key is that the linear types rule out
+aliasing among references.
+
+The linear types also guarantee that all arrays will be deallocated.
+
+\section*{The problem today's reading group paper is trying to solve}
+
+Programming with linear types everywhere by default sucks. It would be nice
+to combine linear types with normal types. This paper shows how to do that
+in Haskell.
 
 \end{document}
