@@ -330,43 +330,38 @@ In hopes of efficiency, we might instead
 try to allocate arrays on a heap and pass references around.
 A heap is a mapping from addresses to values.
 
-\vspace{1cm}
+Values no longer include arrays, but instead include \emph{addresses}, written $\ell$.
+We extend the operational semantics to pass around heaps everywhere, and update
+the rules for arrays as follows.
 
+\vspace{5mm}
 {
 \def\MathparLineskip {\lineskiplimit=1.2em\lineskip=2.5em plus 0.2em}
 
 {
 \setlength{\fboxsep}{5pt}
-\fbox{\hastype{\Gamma}{e}{\tau}}
+\fbox{\step{(e,h)}{(e,h)}}
 }
 \begin{mathpar}
   \inferrule*[right=Alloc]
-    {$addr$ ~\not \in~ $h$}
-    {\step{(\textbf{alloc} (e),~ $h$)} {(\textbf{skip},~ $h$ ~\cup~ \{$addr$ ~\rightarrow~ $e$\})}}
-
+    {\ell \not\in h}
+    {\step{([v_1,\dots,v_n], h)}{(\ell, h \cup \{\ell \mapsto [v_1,\dots,v_n]\})}}
   \and
-  \inferrule*[right=Read]
-    {\hastype{\Gamma}{e_1}{\tyarray\ \tau} \and
-     \hastype{\Gamma}{e_2}{\tyint} \and
-     \exists~$addr$~:~$h$~(addr)~ = ~ e_1
-    }
-    {\hastype{\Gamma}{e_1[e_2]}{\tau}}
+  \inferrule*[right=DoRead]
+    { h(\ell) = [v_1,\dots,v_n] }
+    {\step{(\ell[i], h)}{(v_i, h)}}
   \and
-  \inferrule*[right=Write]
-    {\hastype{\Gamma}{e_1}{\tyarray\ \tau} \and
-     \hastype{\Gamma}{e_2}{\tyint} \and
-     \hastype{\Gamma}{e_3}{\tau} \and
-     \exists~$addr$~:~$h$~(addr)~ = ~e_1
-    }
-    {\step{(e_1[e_2] := e_3,~ $h$)} {(\textbf{skip},~ $h$~\cup~ \{e_2 ~\rightarrow~ e_3\})}}
+  \inferrule*[right=DoWrite]
+    { h(\ell) = [v_1,\dots,v_n] \and
+      h' = h[\ell\mapsto [v_1,\dots,v_{i-1},v,v_{i+1},\dots,v_n]]
+      }
+    {\step{(\ell[i] := v, h)}{(\ell, h')}}
 \end{mathpar}
 }
 
-\vspace{1cm}
-\todo{don't forget to make $[v, \dots, v]$ not a value any more}
 
-But \textbf{this would actually change the meaning of arrays} to no longer be
-purely functional. For example, the program
+
+But \textbf{this changes the meaning of arrays}. For example, the program
 \begin{align*}
   &\letin{a}{[0, 0]}\\
   &\letin{b}{a[0] := 1}\\
