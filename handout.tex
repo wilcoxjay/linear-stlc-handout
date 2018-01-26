@@ -328,12 +328,42 @@ arrays by value all over the place.
 \section*{Arrays on the heap}
 In hopes of efficiency, we might instead
 try to allocate arrays on a heap and pass references around.
+A heap is a mapping from addresses to values.
 
 \vspace{1cm}
-\todo{blah blah rules with heaps and stuff}
 
+{
+\def\MathparLineskip {\lineskiplimit=1.2em\lineskip=2.5em plus 0.2em}
+
+{
+\setlength{\fboxsep}{5pt}
+\fbox{\hastype{\Gamma}{e}{\tau}}
+}
+\begin{mathpar}
+  \inferrule*[right=Alloc]
+    {$addr$ ~\not \in~ $h$}
+    {\step{(\textbf{alloc} (e),~ $h$)} {(\textbf{skip},~ $h$ ~\cup~ \{$addr$ ~\rightarrow~ $e$\})}}
+
+  \and
+  \inferrule*[right=Read]
+    {\hastype{\Gamma}{e_1}{\tyarray\ \tau} \and
+     \hastype{\Gamma}{e_2}{\tyint} \and
+     \exists~$addr$~:~$h$~(addr)~ = ~ e_1
+    }
+    {\hastype{\Gamma}{e_1[e_2]}{\tau}}
+  \and
+  \inferrule*[right=Write]
+    {\hastype{\Gamma}{e_1}{\tyarray\ \tau} \and
+     \hastype{\Gamma}{e_2}{\tyint} \and
+     \hastype{\Gamma}{e_3}{\tau} \and
+     \exists~$addr$~:~$h$~(addr)~ = ~e_1
+    }
+    {\step{(e_1[e_2] := e_3,~ $h$)} {(\textbf{skip},~ $h$~\cup~ \{e_2 ~\rightarrow~ e_3\})}}
+\end{mathpar}
+}
+
+\vspace{1cm}
 \todo{don't forget to make $[v, \dots, v]$ not a value any more}
-\vspace{1cm}
 
 But \textbf{this would actually change the meaning of arrays} to no longer be
 purely functional. For example, the program
