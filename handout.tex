@@ -475,18 +475,27 @@ heap using linear types.
 }
 
 The bad example program from before is ruled out by the type
-system. \todo{explain why it doesn't typecheck}
-
+system, because the program variable $a$ is used twice.
 In fact, the value semantics and the heap semantics are equivalent for
 well-typed programs. The key is that the linear types rule out
 aliasing among references.
-
 The linear types also guarantee that all arrays will be deallocated.
+
+There is a problem with the type rules presented above. In the
+\textsc{FunBroken}, the recursive variable $f$ is linearly bound,
+which requires it to be used exactly once. This would mean all
+recursively bound functions would have to make exactly one recursive
+call, which is... bad.
+
+The usual fix is to redo the whole system in a way that supports both
+linear and ``normal'' (non-linear) variables. Then the recursive
+function name would be bound non-linearly. But programming in such a
+system leads to lots of similar annoyances, essentially due to the
+fact that linearity is ``opt out''.
 
 \section*{The problem today's reading group paper is trying to solve}
 
-Programming with linear types everywhere by default sucks. It would be nice
-to combine linear types with normal types. This paper shows how to do that
-in Haskell.
+One way of looking at today's paper is as ``opt in'' linearity.
+They show how to do that by embedding a linear language in Haskell.
 
 \end{document}
